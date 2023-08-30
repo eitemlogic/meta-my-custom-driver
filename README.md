@@ -1,1 +1,1 @@
-Final source file for the step-by-step tutorial
+Final source code for the linux driver step-by-step tutorial
