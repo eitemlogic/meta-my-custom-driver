@@ -8,10 +8,8 @@
 
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/proc_fs.h>
-#include <linux/gpio.h>
 #include <linux/platform_device.h>
-#include <linux/gpio/consumer.h>
+#include <linux/kobject.h>
 #include <linux/i2c.h>
 
 // REGISTRIES
@@ -27,16 +25,12 @@
 // DEVICE ID
 #define ADXL345_DEVID				0xE5
 
-static struct proc_dir_entry *proc_folder;
-static struct proc_dir_entry *proc_file;
-
 static struct i2c_client *imu_client;
+static struct kobject *imu_obj;
 
-static struct gpio_desc *my_led = NULL;
-static int led_on = 0;
-
-static ssize_t driver_read(struct file *file, char *user_buffer, size_t count, loff_t *offs) {
-	
+static ssize_t my_imu_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    // Write accelerometer values to user buffer
 	char return_string[50] = "";
 	u8 raw_data[6];
 	i2c_smbus_read_i2c_block_data(imu_client, ADXL345_REG_DATAX0, 6, raw_data);
@@ -49,52 +43,44 @@ static ssize_t driver_read(struct file *file, char *user_buffer, size_t count, l
 	int y = sign_extend32(le16_to_cpu(y16), 15);
 	int z = sign_extend32(le16_to_cpu(z16), 15);
 
-	// printk("IMU - Values [x y z]: %5d %5d %5d\n", x, y, z);
-	sprintf(return_string, "[x y z]: %5d %5d %5d\n", x, y, z);
-	copy_to_user(user_buffer, return_string, sizeof(return_string));
+	return sprintf(buf, "[x y z]: %5d %5d %5d\n", x, y, z);
+}
 
+static ssize_t my_imu_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	printk("Doing write (NO WRITE FUNCTION IMPLEMENTED)\n");
 	return count;
 }
 
-static ssize_t driver_write(struct file *file, const char *user_buffer, size_t count, loff_t *offs) {
-
-	printk("Doing write (NOT IMPLEMENTED)\n");
-
-	return count;
-}
-
-static struct proc_ops fops = {
-	.proc_read = driver_read,
-	.proc_write = driver_write,
-};
-
+static struct kobj_attribute accel_meas_attr = __ATTR(xyz, 0660, my_imu_show, my_imu_store);
 
 static int my_imu_probe(struct i2c_client *client)
 {
 	// alternative: dev_notice, dev_err etc.
 	printk("IMU - Running probe function\n");
 
-	if(client->addr != 0X53) {
-		printk("IMU - wrong I2C address\n");
-		return -1;
-	}
-
-	const char *label = "my-imu";
-	const char *directory = "my-imus";
+	int err;
 	imu_client = client;
 
-	printk("Creating directory\n");
-	proc_folder = proc_mkdir(directory, NULL);
-	if(proc_folder == NULL) {
-		printk("Error creating directory /proc/%s/\n", directory);
-		return -ENOMEM;
+	if(client->addr != 0X53) {
+		printk("IMU - wrong I2C address\n");
+		return -EIO;
 	}
 
-	proc_file = proc_create(label, 0666, proc_folder, &fops);
-	if(proc_file == NULL) {
-		printk("Error creating file /proc/%s/%s\n", directory, label);
-		proc_remove(proc_folder);
+	printk("Creating sysfs entry\n");
+    // Create sysfs entry
+	imu_obj = kobject_create_and_add("accel", NULL);
+	if(!imu_obj) {
+		printk("Failed to create sysfs entry\n");
 		return -ENOMEM;
+    }
+    // Add attribute
+	err = sysfs_create_file(imu_obj, &accel_meas_attr.attr);
+	if (err) {
+		printk("Failed to create sysfs attribute\n");
+        // Cleanup sysfs entry
+        kobject_put(imu_obj);
+        return -ENOMEM;
 	}
 
 	// Enable IMU measurements
@@ -108,7 +94,8 @@ static int my_imu_probe(struct i2c_client *client)
 static void my_imu_remove(struct i2c_client *client)
 {
 	printk("IMU - Running remove function\n");
-	proc_remove(proc_folder);
+	sysfs_remove_file(imu_obj, &accel_meas_attr.attr);
+    kobject_put(imu_obj);
 }
 
 static struct i2c_device_id my_imu_id[] = {
@@ -132,8 +119,5 @@ static struct i2c_driver my_imu_driver = {
 	}
 };
 
-
 module_i2c_driver(my_imu_driver);
 MODULE_LICENSE("GPL");
-
-

@@ -8,13 +8,9 @@
 
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/proc_fs.h>
-#include <linux/gpio.h>
 #include <linux/platform_device.h>
-#include <linux/gpio/consumer.h>
 #include <linux/i2c.h>
 #include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
 #include <linux/regmap.h>
 
 // REGISTRIES
@@ -151,7 +147,6 @@ static struct i2c_driver my_imu_driver = {
 		.of_match_table = my_imu_of_match,
 	}
 };
-
 
 module_i2c_driver(my_imu_driver);
 MODULE_LICENSE("GPL");
