@@ -1,0 +1,21 @@
+diff --git a/socfpga_cyclone5_de0_nano_soc.dts.orig b/socfpga_cyclone5_de0_nano_soc.dts
+index c8f051fb2b..580e73cec0 100644
+--- a/arch/arm/boot/dts/socfpga_cyclone5_de0_nano_soc.dts
++++ b/arch/arm/boot/dts/socfpga_cyclone5_de0_nano_soc.dts
+@@ -39,6 +39,16 @@
+ 			linux,default-trigger = "heartbeat";
+ 		};
+ 	};
++
++	buttons {
++		compatible = "my-gpio-button";
++		btn0 {
++			label = "hps_btn0";
++			gpios = <&portb 25 0>;
++			debounce-interval = <50>;
++			wakeup-source;
++		};
++	};
+ };
+ 
+ &gmac1 {

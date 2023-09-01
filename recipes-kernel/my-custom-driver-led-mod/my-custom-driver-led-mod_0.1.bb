@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 inherit module
 
 SRC_URI = "file://Makefile \
-           file://my_custom_driver_hello_world.c \
+           file://my_custom_driver_led.c \
           "
 
 S = "${WORKDIR}"
@@ -14,4 +14,4 @@ S = "${WORKDIR}"
 # The inherit of module.bbclass will automatically name module packages with
 # "kernel-module-" prefix as required by the oe-core build environment.
 
-RPROVIDES:${PN} += "kernel-module-my_custom_driver"
+RPROVIDES:${PN} += "kernel-module-my_custom_driver_led"

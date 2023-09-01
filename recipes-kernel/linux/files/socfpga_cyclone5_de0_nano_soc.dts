@@ -32,21 +32,11 @@
 	};
 
 	leds {
-		compatible = "gpio-leds";
+		compatible = "my-gpio-led";
 		hps0 {
 			label = "hps_led0";
 			gpios = <&portb 24 0>;
 			linux,default-trigger = "heartbeat";
-		};
-	};
-
-	buttons {
-		compatible = "my-gpio-button";
-		btn0 {
-			label = "hps_btn0";
-			gpios = <&portb 25 0>;
-			debounce-interval = <50>;
-			wakeup-source;
 		};
 	};
 };

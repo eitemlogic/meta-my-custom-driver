@@ -1,4 +1,4 @@
-obj-m := my_custom_driver_hello_world.o
+obj-m := my_custom_driver_btn.o
 
 SRC := $(shell pwd)
 
